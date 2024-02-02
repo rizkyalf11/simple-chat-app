@@ -8,13 +8,15 @@ import { compare, hash } from 'bcrypt';
 import BaseResponse from 'src/utils/response/base.response';
 import { JwtService } from '@nestjs/jwt';
 import { jwtPayload } from './auth.interface';
-import { jwt_config } from 'src/config/jwt.config';
+import { ConfigService } from '@nestjs/config';
+// import { jwt_config } from 'src/config/jwt.config';
 
 @Injectable()
 export class AuthService extends BaseResponse {
   constructor(
     @InjectRepository(User) private authRepo: Repository<User>,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {
     super();
   }
@@ -38,7 +40,11 @@ export class AuthService extends BaseResponse {
       username: userCreated.username,
     };
 
-    const token = this.generateJWT(jwtPayload, '1d', jwt_config.secret);
+    const token = this.generateJWT(
+      jwtPayload,
+      '1d',
+      this.configService.get('JWT_SECRET'),
+    );
     clbk(token);
 
     return this._success('Register Berhasil', jwtPayload);
@@ -74,7 +80,11 @@ export class AuthService extends BaseResponse {
         username: checkUserExists.username,
       };
 
-      const token = this.generateJWT(jwtPayload, '1d', jwt_config.secret);
+      const token = this.generateJWT(
+        jwtPayload,
+        '1d',
+        this.configService.get('JWT_SECRET'),
+      );
       clbk(token);
 
       return this._success('Login Success', checkUserExists);
@@ -88,7 +98,9 @@ export class AuthService extends BaseResponse {
 
   async profile(token: string) {
     try {
-      const user = this.jwtService.verify(token, { secret: jwt_config.secret });
+      const user = this.jwtService.verify(token, {
+        secret: this.configService.get('JWT_SECRET'),
+      });
 
       return this._success('Berhasil Verify', user);
     } catch (error) {

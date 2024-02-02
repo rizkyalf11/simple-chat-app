@@ -3,8 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Message } from './events/message.entity';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { jwt_config } from './config/jwt.config';
+// import { jwt_config } from './config/jwt.config';
 import { User } from './auth/auth.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AppService {
@@ -12,10 +13,13 @@ export class AppService {
     @InjectRepository(Message) private msgRepo: Repository<Message>,
     @InjectRepository(User) private userRepo: Repository<User>,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   async getMessage(idUser: number, token: string) {
-    const user = this.jwtService.verify(token, { secret: jwt_config.secret });
+    const user = this.jwtService.verify(token, {
+      secret: this.configService.get('JWT_SECRET'),
+    });
     const ourUserId = user.id;
 
     const msg = await this.msgRepo

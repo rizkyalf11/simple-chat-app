@@ -8,9 +8,10 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { jwt_config } from 'src/config/jwt.config';
+// import { jwt_config } from 'src/config/jwt.config';
 import { Message } from './message.entity';
 import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 
 @WebSocketGateway({
   cors: { origin: 'http://localhost:3000', credentials: true },
@@ -25,6 +26,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     @InjectRepository(Message) private msgRepo: Repository<Message>,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   @SubscribeMessage('message')
@@ -77,7 +79,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       try {
         const user = this.jwtService.verify(token, {
-          secret: jwt_config.secret,
+          secret: this.configService.get('JWT_SECRET'),
         });
         console.log(user);
 
@@ -114,7 +116,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       try {
         const user = this.jwtService.verify(token, {
-          secret: jwt_config.secret,
+          secret: this.configService.get('JWT_SECRET'),
         });
         const usersUpdate = this.users.filter((item) => item.id != user.id);
 
